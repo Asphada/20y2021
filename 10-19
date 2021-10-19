@@ -1,0 +1,136 @@
+// ----------------------------------------------------------------------------
+//                                                                            
+//    Project: VEXCode1
+//    Author: Angel Ramirez-Rios
+//    Created: October 13th, 2021
+//    Configuration:        
+//                                                                            
+// ----------------------------------------------------------------------------
+
+// Include the V5 Library
+#include "vex.h"
+
+// Allows for easier use of the VEX Library
+using namespace vex;
+
+// Begin project code
+
+bool spinRing = false;
+
+void moveLiftUp (int amount, bool stopProgram) {
+    LiftM.spinFor(forward, amount, degrees, stopProgram);
+}
+
+void moveLiftDown (int amount, bool stopProgram) {
+    LiftM.spinFor(reverse, amount, degrees, stopProgram);
+}
+
+void spinAutonRing (bool stopProgram) {
+    LeftD.spinFor(forward, 1080, degrees, stopProgram);
+}
+
+void moveForward(int travelDistance, bool stopProgram) {
+  LeftD.spinFor(forward, travelDistance, degrees, false);
+  RightD.spinFor(forward, travelDistance, degrees, stopProgram);
+}
+
+void turnLeft(bool stopProgram) {
+  LeftD.spinFor(reverse, 240, degrees, false);
+  RightD.spinFor(forward, 240, degrees, stopProgram);
+}
+
+void turnRight(bool stopProgram) {
+  LeftD.spinFor(forward, 240, degrees, false); 
+  RightD.spinFor(reverse, 240, degrees, stopProgram);
+}
+
+void preAutonomous(void) {
+  // actions to do when the program starts
+  Brain.Screen.clearScreen();
+  Brain.Screen.print("pre auton code");
+  wait(1, seconds);
+}
+
+void autonomous(void) {
+  Brain.Screen.clearScreen();
+  Brain.Screen.print("autonomous code");
+  // place automonous code here
+  moveLiftDown(900, true);
+  moveForward(420, true);
+  //Move Lift Up, Block Program
+  
+  turnLeft(true);
+
+  moveForward(420, true);
+  turnRight(true);
+  moveForward(1260, true);
+}
+
+void userControl(void) {
+  Brain.Screen.clearScreen();
+  // place driver control in this while loop
+  while (true) {
+    wait(20, msec);
+    LeftD.spin(forward, Controller1.Axis3.position()*120, voltageUnits::mV);
+    RightD.spin(forward, Controller1.Axis2.position()*120, voltageUnits::mV);
+    if (Controller1.ButtonX.pressing()) {
+        spinRing = true;
+    } else if (Controller1.ButtonB.pressing()) {
+        spinRing = false;
+    }
+
+    if (Controller1.ButtonUp.pressing() || spinRing) {
+        Ring.spin(forward, 12000, voltageUnits::mV);
+    } else if (Controller1.ButtonDown.pressing()) {
+        Ring.spin(reverse, 12000, voltageUnits::mV);
+    } else {
+        Ring.setStopping(brake);
+        Ring.stop();
+    }
+
+    if (Controller1.ButtonL1.pressing()) {
+        Fourbar.spin(reverse, 120000, voltageUnits::mV);
+    } else if (Controller1.ButtonL2.pressing()) {
+        Fourbar.spin(forward, 120000, voltageUnits::mV);
+    } else {
+        Fourbar.setStopping(brake);
+        Fourbar.stop();
+    }
+
+    if (Controller1.ButtonR1.pressing()) {
+        LiftM.spin(forward, 120000, voltageUnits::mV);
+    } else if (Controller1.ButtonR2.pressing()) {
+        LiftM.spin(reverse, 120000, voltageUnits::mV);
+    } else {
+        LiftM.setStopping(brake);
+        LiftM.stop();
+    }
+    
+    if (Controller1.ButtonY.pressing()) {
+        LiftM.spin(reverse, 12000, voltageUnits::mV);
+        Fourbar.spin(forward, 12000, voltageUnits::mV);
+    } else {
+        LiftM.setStopping(brake);
+        LiftM.stop();
+        Fourbar.setStopping(brake);
+        Fourbar.stop();
+    } 
+  }
+}
+
+int main() {
+  // create competition instance
+  competition Competition;
+
+  // Set up callbacks for autonomous and driver control periods.
+  Competition.autonomous(autonomous);
+  Competition.drivercontrol(userControl);
+
+  // Run the pre-autonomous function.
+  preAutonomous();
+
+  // Prevent main from exiting with an infinite loop.
+  while (true) {
+    wait(100, msec);
+  }
+}
